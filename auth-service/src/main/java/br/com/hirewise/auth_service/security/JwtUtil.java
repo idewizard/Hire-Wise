@@ -1,7 +1,11 @@
 package br.com.hirewise.auth_service.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -50,6 +54,22 @@ public class JwtUtil {
 
     // Valida o Token JWT
     public boolean validateJwtToken(String token){
-        
+        try{
+            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+            return true;
+        } catch (SecurityException e){
+            System.out.println("Assinatura JWT Invalida: " + e.getMessage());
+        } catch (MalformedJwtException e){
+            System.out.println("Token JWT Invalido: " + e.getMessage());
+        } catch (ExpiredJwtException e){
+            System.out.println("Token JWT vencido: " + e.getMessage());
+        } catch (UnsupportedJwtException e){
+            System.out.println("Token JWT nao suportado: " + e.getMessage());
+        } catch (IllegalArgumentException e){
+            System.out.println("Claims do token JWT estao vazias: " + e.getMessage());
+        }
+
+        return false;
     }
+
 }
