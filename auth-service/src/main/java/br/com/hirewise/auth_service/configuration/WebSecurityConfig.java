@@ -3,7 +3,6 @@ package br.com.hirewise.auth_service.configuration;
 import br.com.hirewise.auth_service.service.AuthEntryPointJwt;
 import br.com.hirewise.auth_service.service.AuthTokenFilter;
 import br.com.hirewise.auth_service.service.CustomUserDetailService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,7 +53,9 @@ public class WebSecurityConfig {
                 )
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/api/auth/**", "/api/test/all").permitAll() // Use 'requestMatchers' instead of 'antMatchers'
+                                .requestMatchers("/api/auth/**", "/api/test/all").permitAll()
+                                .requestMatchers("/api/test/user/**").hasAnyRole( "USER", "ADMIN")
+                                .requestMatchers("/api/test/admin/**").hasAnyRole("ADMIN")
                                 .anyRequest().authenticated()
                 );
         // Add the JWT Token filter before the UsernamePasswordAuthenticationFilter

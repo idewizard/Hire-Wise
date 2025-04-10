@@ -3,12 +3,12 @@ package br.com.hirewise.auth_service.controller;
 import br.com.hirewise.auth_service.model.User;
 import br.com.hirewise.auth_service.repository.UserRepository;
 import br.com.hirewise.auth_service.security.JwtUtil;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,7 +41,15 @@ public class AuthController {
         );
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return jwtUtil.generateToken(userDetails.getUsername());
+
+        User fullUserDetails = userRepository.findByUsername(userDetails.getUsername());
+
+        if( fullUserDetails == null){
+            System.out.println("Usuario nao encontrado");
+            throw new UsernameNotFoundException("Usuario nao encontrado");
+        }
+
+        return jwtUtil.generateToken(fullUserDetails);
     }
 
     @PostMapping("/signup")
@@ -54,7 +62,8 @@ public class AuthController {
         User newUser = new User(
                 null,
                 user.getUsername(),
-                encoder.encode(user.getPassword())
+                encoder.encode(user.getPassword()),
+                user.getRoles()
         );
 
         userRepository.save(newUser);

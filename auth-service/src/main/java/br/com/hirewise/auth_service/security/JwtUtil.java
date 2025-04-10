@@ -1,9 +1,7 @@
 package br.com.hirewise.auth_service.security;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
+import br.com.hirewise.auth_service.model.User;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.PostConstruct;
@@ -12,7 +10,8 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtUtil {
@@ -33,13 +32,26 @@ public class JwtUtil {
     }
 
     // Gera o Token JWT
-    public String generateToken(String username){
+    public String generateToken(User user){
         return Jwts.builder()
-                .subject(username)
+                .subject(user.getUsername())
+                .claim("roles", user.getRoles()) //busca as permissoes
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
+    }
+
+    public List<String> getRolesFromToken(String token) {
+        return ((List<?>) Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("roles", List.class))
+                .stream()
+                .map(Object::toString)
+                .collect(Collectors.toList());
     }
 
     // Pega o username do token jwt
