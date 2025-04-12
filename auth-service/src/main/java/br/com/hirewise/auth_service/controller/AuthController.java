@@ -3,7 +3,11 @@ package br.com.hirewise.auth_service.controller;
 import br.com.hirewise.auth_service.model.User;
 import br.com.hirewise.auth_service.repository.UserRepository;
 import br.com.hirewise.auth_service.security.JwtUtil;
+import br.com.hirewise.auth_service.service.UserProfileClient;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -31,6 +35,9 @@ public class AuthController {
     @Autowired
     JwtUtil jwtUtil;
 
+    @Autowired
+    UserProfileClient userProfileClient;
+
     @PostMapping("/signin")
     public String authenticateUser(@RequestBody User user){
         Authentication authentication = authenticationManager.authenticate(
@@ -52,21 +59,30 @@ public class AuthController {
         return jwtUtil.generateToken(fullUserDetails);
     }
 
+
+    //Todo: Cria um novo usuario, INCOMPLETO AINDA
     @PostMapping("/signup")
-    public String registerUser(@RequestBody User user){
+    public ResponseEntity<?> registerUser(@RequestBody User user, HttpServletRequest request){
         if (userRepository.existsByUsername(user.getUsername())){
-            return "Erro: Usuario ja cadastrado";
+            return ResponseEntity.badRequest().body("Usuario Ja cadastrado");
         }
 
-        //Todo: Cria um novo usuario, mover para service em outro momento
+
+
+
+        //TODO mover para uma service
         User newUser = new User(
                 null,
                 user.getUsername(),
                 encoder.encode(user.getPassword()),
                 user.getRoles()
         );
-
         userRepository.save(newUser);
-        return "Usuario cadastrado com sucesso!";
+
+        String jwt = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        userProfileClient.create(user, jwt);
+
+        return ResponseEntity.ok().body("Usuario Criado com sucesso");
     }
 }
